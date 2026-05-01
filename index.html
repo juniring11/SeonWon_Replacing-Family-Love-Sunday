@@ -1,0 +1,200 @@
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; }
+.wrap { padding: 20px 16px 32px; width: 100%; max-width: 480px; margin: 0 auto; }
+.hd { text-align: center; margin-bottom: 20px; }
+.hd h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); line-height: 1.5; margin-bottom: 6px; }
+.hd p { font-size: 13px; color: var(--color-text-secondary); }
+
+.name-box { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px; margin-bottom: 16px; background: var(--color-background-primary); }
+.name-box label { font-size: 13px; color: var(--color-text-secondary); display: block; margin-bottom: 8px; }
+.name-box input { width: 100%; font-size: 17px; padding: 12px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); color: var(--color-text-primary); }
+.name-box input:focus { outline: none; border-color: #1D9E75; }
+.warn { font-size: 13px; color: #A32D2D; margin-top: 6px; min-height: 18px; }
+
+.opts { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-bottom: 16px; }
+.opt-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px 8px 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.opt-card:active { opacity: 0.75; }
+.opt-card.selected { border: 2px solid #0F6E56; background: #E1F5EE; }
+.opt-card.voted { cursor: default; }
+.chk { width: 24px; height: 24px; border-radius: 50%; background: #1D9E75; display: none; align-items: center; justify-content: center; margin-bottom: 8px; }
+.chk svg { width: 13px; height: 13px; }
+.opt-card.selected .chk { display: flex; }
+.opt-num { font-size: 11px; color: var(--color-text-tertiary); letter-spacing: 1px; margin-bottom: 8px; }
+.opt-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; word-break: keep-all; line-height: 1.35; }
+.opt-sub { font-size: 11px; color: var(--color-text-secondary); line-height: 1.45; word-break: keep-all; }
+
+.vote-btn { display: block; width: 100%; padding: 16px; background: #1D4E35; color: #fff; border: none; border-radius: var(--border-radius-md); font-size: 17px; font-weight: 500; cursor: pointer; margin-bottom: 10px; }
+.vote-btn:disabled { opacity: 0.35; cursor: default; }
+.msg { text-align: center; font-size: 14px; color: #085041; margin-bottom: 16px; min-height: 20px; }
+
+.result-box { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 20px 16px; }
+.result-ttl { font-size: 13px; color: var(--color-text-secondary); text-align: center; margin-bottom: 16px; }
+.pie-center { display: flex; justify-content: center; margin-bottom: 16px; }
+.legend { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
+.leg-row { display: flex; align-items: center; gap: 10px; }
+.leg-dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+.leg-name { font-size: 15px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+.leg-cnt { font-size: 14px; color: var(--color-text-secondary); margin-right: 4px; }
+.leg-pct { font-size: 14px; font-weight: 500; color: var(--color-text-primary); min-width: 40px; text-align: right; }
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 14px 0; }
+.total-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 14px; }
+.total-row span { color: var(--color-text-secondary); }
+.total-row strong { color: var(--color-text-primary); }
+.voters-lbl { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px; }
+.voters-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.vtag { font-size: 12px; background: var(--color-background-secondary); color: var(--color-text-secondary); border-radius: 20px; padding: 4px 12px; }
+</style>
+
+<div class="wrap">
+  <h2 class="sr-only">강화선원교회 연합예배 이름 온라인 투표</h2>
+  <div class="hd">
+    <h2>"가족사랑주일"을 대신할<br>새 이름을 골라주세요!</h2>
+    <p>강화선원교회 · 2026 &nbsp;|&nbsp; 1인 1표</p>
+  </div>
+
+  <div class="name-box">
+    <label>성함을 입력해 주세요 (중복 투표 방지)</label>
+    <input type="text" id="nameInput" placeholder="예) 홍길동" maxlength="10" autocomplete="off" />
+    <div class="warn" id="warn"></div>
+  </div>
+
+  <div class="opts" id="opts"></div>
+  <button class="vote-btn" id="voteBtn" disabled>투표하기</button>
+  <div class="msg" id="msg"></div>
+
+  <div class="result-box">
+    <div class="result-ttl">실시간 집계 결과</div>
+    <div class="pie-center"><canvas id="pie" width="180" height="180"></canvas></div>
+    <div class="legend" id="legend"></div>
+    <hr class="divider">
+    <div class="total-row"><span>총 투표 수</span><strong id="total">0표</strong></div>
+    <div class="voters-lbl">투표 참여자</div>
+    <div class="voters-list" id="votersList"></div>
+  </div>
+</div>
+
+<script>
+const OPT=[
+  {id:"onbit",  num:"01",title:"온빛예배",  sub:"온 세대가\n빛 안에서 함께", color:"#1D9E75"},
+  {id:"hanjari",num:"02",title:"한자리예배",sub:"온 세대가\n한자리에",        color:"#378ADD"},
+  {id:"ieum",   num:"03",title:"이음예배",  sub:"세대와 세대를\n잇다",        color:"#BA7517"},
+];
+let sel=null,voted=false,votes={onbit:0,hanjari:0,ieum:0},voters={};
+
+async function load(){
+  try{const r=await window.storage.get('vote_results',true);if(r){const d=JSON.parse(r.value);votes=d.votes||votes;voters=d.voters||voters;}}catch(e){}
+  renderAll();
+}
+async function save(){
+  try{await window.storage.set('vote_results',JSON.stringify({votes,voters}),true);}catch(e){}
+}
+function tot(){return votes.onbit+votes.hanjari+votes.ieum;}
+function pct(id){const t=tot();return t===0?0:Math.round(votes[id]/t*100);}
+
+function renderOpts(){
+  document.getElementById('opts').innerHTML=OPT.map(o=>`
+    <div class="opt-card${sel===o.id?' selected':''}${voted?' voted':''}" onclick="pick('${o.id}')">
+      <div class="chk"><svg viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="opt-num">NO. ${o.num}</div>
+      <div class="opt-title">${o.title}</div>
+      <div class="opt-sub">${o.sub.replace('\n','<br>')}</div>
+    </div>`).join('');
+}
+
+function drawPie(){
+  const canvas=document.getElementById('pie');
+  const ctx=canvas.getContext('2d');
+  const cx=90,cy=90,r=82;
+  ctx.clearRect(0,0,180,180);
+  const t=tot();
+  if(t===0){
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fillStyle='#e0e0e0';ctx.fill();
+    ctx.fillStyle='#999';ctx.font='14px sans-serif';ctx.textAlign='center';
+    ctx.fillText('투표 없음',cx,cy+5);
+    return;
+  }
+  let start=-Math.PI/2;
+  OPT.forEach(o=>{
+    const slice=votes[o.id]/t*Math.PI*2;
+    if(!slice)return;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,start+slice);
+    ctx.closePath();ctx.fillStyle=o.color;ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();
+    if(pct(o.id)>=8){
+      const mid=start+slice/2;
+      ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+      ctx.fillText(pct(o.id)+'%',cx+Math.cos(mid)*r*0.62,cy+Math.sin(mid)*r*0.62+5);
+    }
+    start+=slice;
+  });
+  ctx.beginPath();ctx.arc(cx,cy,r*0.38,0,Math.PI*2);
+  ctx.fillStyle=getComputedStyle(document.querySelector('.result-box')).backgroundColor||'#fff';
+  ctx.fill();
+}
+
+function renderLegend(){
+  document.getElementById('legend').innerHTML=OPT.map(o=>`
+    <div class="leg-row">
+      <div class="leg-dot" style="background:${o.color}"></div>
+      <span class="leg-name">${o.title}</span>
+      <span class="leg-cnt">${votes[o.id]}표</span>
+      <span class="leg-pct">${pct(o.id)}%</span>
+    </div>`).join('');
+  document.getElementById('total').textContent=tot()+'표';
+}
+
+function renderVoters(){
+  const names=Object.keys(voters);
+  document.getElementById('votersList').innerHTML=names.length===0
+    ?'<span style="font-size:13px;color:var(--color-text-tertiary)">아직 투표자가 없습니다</span>'
+    :names.map(n=>`<span class="vtag">${n}</span>`).join('');
+}
+
+function renderAll(){renderOpts();drawPie();renderLegend();renderVoters();}
+
+function pick(id){
+  if(voted)return;
+  const name=document.getElementById('nameInput').value.trim();
+  if(!name){document.getElementById('warn').textContent='성함을 먼저 입력해 주세요.';return;}
+  sel=id;
+  document.getElementById('voteBtn').disabled=false;
+  renderOpts();
+}
+
+document.getElementById('nameInput').addEventListener('input',()=>{
+  document.getElementById('warn').textContent='';
+  const name=document.getElementById('nameInput').value.trim();
+  if(name&&voters[name]){
+    voted=true;sel=voters[name];
+    document.getElementById('voteBtn').disabled=true;
+    document.getElementById('voteBtn').textContent='이미 투표하셨습니다';
+    document.getElementById('msg').textContent=name+'님은 이미 투표에 참여하셨습니다.';
+  } else {
+    voted=false;sel=null;
+    document.getElementById('voteBtn').disabled=true;
+    document.getElementById('voteBtn').textContent='투표하기';
+    document.getElementById('msg').textContent='';
+  }
+  renderOpts();
+});
+
+document.getElementById('voteBtn').addEventListener('click',async()=>{
+  const name=document.getElementById('nameInput').value.trim();
+  if(!name){document.getElementById('warn').textContent='성함을 입력해 주세요.';return;}
+  if(!sel||voted)return;
+  if(voters[name]){document.getElementById('msg').textContent=name+'님은 이미 투표하셨습니다.';return;}
+  voters[name]=sel;votes[sel]++;
+  voted=true;
+  document.getElementById('voteBtn').disabled=true;
+  document.getElementById('voteBtn').textContent='투표 완료!';
+  document.getElementById('msg').textContent=name+'님, 소중한 한 표 감사합니다!';
+  await save();
+  renderAll();
+});
+
+load();
+</script>
